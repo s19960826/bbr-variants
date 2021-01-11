@@ -95,7 +95,8 @@ TcpSocketState::TcpSocketState (const TcpSocketState &other)
     m_currentPacingRate (other.m_currentPacingRate),
     m_minRtt (other.m_minRtt),
     m_bytesInFlight (other.m_bytesInFlight),
-    m_lastRtt (other.m_lastRtt)
+    m_lastRtt (other.m_lastRtt),
+    m_address (other.m_address)
 {
 }
 
@@ -110,5 +111,7 @@ TcpSocketState::EcnStateName[TcpSocketState::ECN_CWR_SENT + 1] =
 {
   "ECN_DISABLED", "ECN_IDLE", "ECN_CE_RCVD", "ECN_SENDING_ECE", "ECN_ECE_RCVD", "ECN_CWR_SENT"
 };
+
+
 
 } //namespace ns3

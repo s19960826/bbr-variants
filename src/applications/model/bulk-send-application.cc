@@ -30,6 +30,9 @@
 #include "ns3/trace-source-accessor.h"
 #include "ns3/tcp-socket-factory.h"
 #include "bulk-send-application.h"
+#include "ns3/address-tag.h"
+#include "ns3/ipv4-priority-tag.h"
+//#include "ns3/test-tag.h"
 
 namespace ns3 {
 
@@ -45,7 +48,7 @@ BulkSendApplication::GetTypeId (void)
     .SetGroupName("Applications") 
     .AddConstructor<BulkSendApplication> ()
     .AddAttribute ("SendSize", "The amount of data to send each time.",
-                   UintegerValue (512),
+                   UintegerValue (1024),
                    MakeUintegerAccessor (&BulkSendApplication::m_sendSize),
                    MakeUintegerChecker<uint32_t> (1))
     .AddAttribute ("Remote", "The address of the destination",
@@ -85,6 +88,14 @@ BulkSendApplication::~BulkSendApplication ()
   NS_LOG_FUNCTION (this);
 }
 
+//set app controller
+void
+BulkSendApplication::SetAppController (Ptr<ControlDecider> controller, uint16_t tuple)
+{
+  app_controller = controller;
+  app_tuple = tuple;
+}
+
 void
 BulkSendApplication::SetMaxBytes (uint64_t maxBytes)
 {
@@ -113,6 +124,9 @@ BulkSendApplication::DoDispose (void)
 void BulkSendApplication::StartApplication (void) // Called at time specified by Start
 {
   NS_LOG_FUNCTION (this);
+
+  //flow start time
+  app_controller->FlowStartTime(app_tuple, Now().GetMicroSeconds());
 
   // Create the socket if not already
   if (!m_socket)
@@ -150,11 +164,17 @@ void BulkSendApplication::StartApplication (void) // Called at time specified by
         MakeCallback (&BulkSendApplication::ConnectionFailed, this));
       m_socket->SetSendCallback (
         MakeCallback (&BulkSendApplication::DataSend, this));
+
+      //set controller
+      m_socket->SetController(app_controller);
     }
   if (m_connected)
     {
       SendData ();
     }
+
+    //combine the tuple and flowsize
+    app_controller->StartFlowSize(app_tuple, m_maxBytes);
 }
 
 void BulkSendApplication::StopApplication (void) // Called at time specified by Stop
@@ -194,11 +214,28 @@ void BulkSendApplication::SendData (void)
 
       NS_LOG_LOGIC ("sending packet at " << Simulator::Now ());
       Ptr<Packet> packet = Create<Packet> (toSend);
+      //std::cout << "packet: " << packet->GetSize() << std::endl;
+
+      //add address tag
+      AddressTag addressTag;
+      addressTag.SetAddress(app_tuple);
+      packet->AddByteTag (addressTag);
+
+      //add priority tag
+      Ipv4PriorityTag ipv4PriorityTag;
+      ipv4PriorityTag.SetPriorityTag(app_controller->flowSize[app_tuple]);
+      packet->AddByteTag (ipv4PriorityTag);
+
+
+
       int actual = m_socket->Send (packet);
       if (actual > 0)
         {
           m_totBytes += actual;
           m_txTrace (packet);
+
+         //remained data of flow
+         app_controller->FlowSize(app_tuple, (m_maxBytes-m_totBytes));
         }
       // We exit this loop when actual < toSend as the send side
       // buffer is full. The "DataSent" callback will pop when
@@ -211,8 +248,8 @@ void BulkSendApplication::SendData (void)
   // Check if time to close (all sent)
   if (m_totBytes == m_maxBytes && m_connected)
     {
-      m_socket->Close ();
-      m_connected = false;
+        m_socket->Close ();
+        m_connected = false;
     }
 }
 

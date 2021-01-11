@@ -26,6 +26,8 @@
 #include "ns3/event-id.h"
 #include "ns3/ptr.h"
 #include "ns3/traced-callback.h"
+#include <map>
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -98,6 +100,12 @@ public:
    * \return pointer to associated socket
    */
   Ptr<Socket> GetSocket (void) const;
+  
+  //set device controller
+  Ptr<ControlDecider>   app_controller;
+  void SetAppController(Ptr<ControlDecider> controller, uint16_t tuple);
+  uint16_t app_tuple;
+  
 
 protected:
   virtual void DoDispose (void);
@@ -137,6 +145,7 @@ private:
    * \brief Send more data as soon as some has been transmitted.
    */
   void DataSend (Ptr<Socket>, uint32_t); // for socket's SetSendCallback
+
 };
 
 } // namespace ns3

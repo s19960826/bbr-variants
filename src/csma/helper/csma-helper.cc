@@ -32,6 +32,7 @@
 
 #include "ns3/trace-helper.h"
 #include "csma-helper.h"
+#include "ns3/multi-queue.h"
 
 #include <string>
 
@@ -42,6 +43,7 @@ NS_LOG_COMPONENT_DEFINE ("CsmaHelper");
 CsmaHelper::CsmaHelper ()
 {
   m_queueFactory.SetTypeId ("ns3::DropTailQueue<Packet>");
+  //m_queueFactory.SetTypeId ("ns3::MultiQueue<Packet>");
   m_deviceFactory.SetTypeId ("ns3::CsmaNetDevice");
   m_channelFactory.SetTypeId ("ns3::CsmaChannel");
 }

@@ -29,6 +29,7 @@
 #include "point-to-point-channel.h"
 #include "ppp-header.h"
 
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("PointToPointNetDevice");
@@ -187,6 +188,13 @@ PointToPointNetDevice::~PointToPointNetDevice ()
   NS_LOG_FUNCTION (this);
 }
 
+//set device controller
+void
+PointToPointNetDevice::SetDevController (Ptr<ControlDecider> controller)
+{
+  dev_controller = controller;
+}
+
 void
 PointToPointNetDevice::AddHeader (Ptr<Packet> p, uint16_t protocolNumber)
 {
@@ -319,6 +327,7 @@ PointToPointNetDevice::SetQueue (Ptr<Queue<Packet> > q)
 {
   NS_LOG_FUNCTION (this << q);
   m_queue = q;
+  m_queue->SetQueueController(dev_controller);
 }
 
 void
@@ -512,7 +521,8 @@ PointToPointNetDevice::Send (
   NS_LOG_FUNCTION (this << packet << dest << protocolNumber);
   NS_LOG_LOGIC ("p=" << packet << ", dest=" << &dest);
   NS_LOG_LOGIC ("UID is " << packet->GetUid ());
-
+  std::cout << "time" << Now().GetSeconds() << std::endl;
+  //std::cout <<"size" << packet->GetSize() << std::endl;
   //
   // If IsLinkUp() is false it means there is no channel to send any packet 
   // over so we just hit the drop trace on the packet and return an error.
@@ -544,8 +554,22 @@ PointToPointNetDevice::Send (
           packet = m_queue->Dequeue ();
           m_snifferTrace (packet);
           m_promiscSnifferTrace (packet);
-          bool ret = TransmitStart (packet);
-          return ret;
+
+	  //random lose packet
+	  randValue = randValue+1;
+	  srand(randValue);
+	  double x = (rand()%1000)/1000.0;
+	  
+	  if(x>(dev_controller->randomloss))
+	  {
+            bool ret = TransmitStart (packet);
+            return ret;
+	  }
+	  else
+	  {
+	    return true;
+	  }
+
         }
       return true;
     }

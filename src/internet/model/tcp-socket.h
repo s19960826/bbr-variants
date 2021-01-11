@@ -29,6 +29,7 @@
 #include "ns3/ptr.h"
 #include "ns3/object.h"
 #include "ns3/nstime.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -56,6 +57,9 @@ public:
  
   TcpSocket (void);
   virtual ~TcpSocket (void);
+
+  //set controller
+  //virtual void SetController(Ptr<ControlDecider> controller) = 0;
 
   /**
    * \ingroup tcp

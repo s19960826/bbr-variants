@@ -130,6 +130,10 @@ public:
   uint32_t               m_initialCWnd      {0}; //!< Initial cWnd value
   uint32_t               m_initialSsThresh  {0}; //!< Initial Slow Start Threshold value
 
+  //flow type
+  uint16_t m_address {0};
+
+
   // Segment
   uint32_t               m_segmentSize   {0}; //!< Segment size
   SequenceNumber32       m_lastAckedSeq  {0}; //!< Last sequence ACKed

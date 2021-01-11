@@ -7,6 +7,15 @@ def build(bld):
         'model/csma-net-device.cc',
         'model/csma-channel.cc',
         'helper/csma-helper.cc',
+        'model/csma-send-device.cc',
+        'model/csma-recv-device.cc',
+        'model/csma-send-channel.cc',
+        'model/csma-recv-channel.cc',
+        'model/send-backoff.cc',
+        'model/recv-backoff.cc',
+        'helper/csma-send-helper.cc',
+        'helper/csma-recv-helper.cc',
+
         ]
     headers = bld(features='ns3header')
     headers.module = 'csma'
@@ -15,6 +24,14 @@ def build(bld):
         'model/csma-net-device.h',
         'model/csma-channel.h',
         'helper/csma-helper.h',
+        'model/csma-send-device.h',
+        'model/csma-recv-device.h',
+        'model/csma-send-channel.h',
+        'model/send-backoff.h',
+        'model/csma-recv-channel.h',
+        'model/recv-backoff.h',
+        'helper/csma-send-helper.h',
+        'helper/csma-recv-helper.h',
         ]
 
     if bld.env['ENABLE_EXAMPLES']:

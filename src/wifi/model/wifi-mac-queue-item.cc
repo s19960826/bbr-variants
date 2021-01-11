@@ -47,6 +47,13 @@ WifiMacQueueItem::~WifiMacQueueItem ()
 {
 }
 
+//add tag detector
+bool
+WifiMacQueueItem::FindFirstMatchingByteTag (Tag &tag) const
+{
+  return(m_packet->FindFirstMatchingByteTag(tag));
+}
+
 Ptr<const Packet>
 WifiMacQueueItem::GetPacket (void) const
 {

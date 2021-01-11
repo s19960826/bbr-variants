@@ -223,6 +223,7 @@ Ipv4GlobalRouting::LookupGlobal (Ipv4Address dest, Ptr<NetDevice> oif)
       if (m_randomEcmpRouting)
         {
           selectIndex = m_rand->GetInteger (0, allRoutes.size ()-1);
+          //std::vector<std::vector<uint32_t>> tmp = m_flowRouting[allRoutes[0]];
         }
       else 
         {

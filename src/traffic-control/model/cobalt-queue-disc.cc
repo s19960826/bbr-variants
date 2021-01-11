@@ -35,6 +35,8 @@
 #include "ns3/net-device-queue-interface.h"
 #include <climits>
 
+#include "ns3/multi-queue.h"
+
 
 namespace ns3 {
 

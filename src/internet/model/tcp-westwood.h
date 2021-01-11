@@ -38,6 +38,7 @@
 #include "ns3/sequence-number.h"
 #include "ns3/traced-value.h"
 #include "ns3/event-id.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -105,7 +106,13 @@ public:
   virtual void PktsAcked (Ptr<TcpSocketState> tcb, uint32_t packetsAcked,
                           const Time& rtt);
 
+  //virtual void SetController(Ptr<ControlDecider> controller);
+  //Ptr<ControlDecider> m_controller;
+  uint64_t lastTime = 0;
+  uint64_t curTime;
+
   virtual Ptr<TcpCongestionOps> Fork ();
+
 
 private:
   /**

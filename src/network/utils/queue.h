@@ -35,6 +35,14 @@
 #include <sstream>
 #include <list>
 
+#include <queue>
+#include "ns3/random-variable-stream.h"
+#include "ns3/ipv4-priority-tag.h"
+
+#include "ns3/control-decider.h"
+
+#define DEFAULTNUMPRIORITY 4
+
 namespace ns3 {
 
 /**
@@ -298,6 +306,10 @@ public:
   /// Define ItemType as the type of the stored elements
   typedef Item ItemType;
 
+  void SetQueueController(Ptr<ControlDecider> controller);
+  Ptr<ControlDecider> queue_controller;
+
+
 protected:
 
   /// Const iterator.
@@ -377,6 +389,7 @@ protected:
    */
   bool DoEnqueue (ConstIterator pos, Ptr<Item> item);
 
+
   /**
    * Pull the item to dequeue from the queue
    * \param pos the position of the item to dequeue
@@ -418,6 +431,14 @@ protected:
    */
   void DropAfterDequeue (Ptr<Item> item);
 
+  void SetNumPriority(uint32_t numPriority, std::vector<double> weight);
+
+  //for multi-queue
+  bool DoEnqueue (Ptr<Item> item);
+  Ptr<Item> DoDequeue (void);
+  Ptr<Item> DoRemove (void);
+  Ptr<const Item> DoPeek (void) const;
+
 private:
   std::list<Ptr<Item> > m_packets;          //!< the items in the queue
   NS_LOG_TEMPLATE_DECLARE;                  //!< the log component
@@ -432,6 +453,13 @@ private:
   TracedCallback<Ptr<const Item> > m_traceDropBeforeEnqueue;
   /// Traced callback: fired when a packet is dropped after dequeue
   TracedCallback<Ptr<const Item> > m_traceDropAfterDequeue;
+
+  std::vector<std::queue<Ptr<Item>>> m_vecQuePackets;
+  uint32_t m_numPriority;
+  Ptr<UniformRandomVariable> m_randomVariable;
+
+  //besides the priority 0, each queue has a weight
+  std::vector<double> m_vecWeight;
 };
 
 
@@ -470,11 +498,252 @@ template <typename Item>
 Queue<Item>::Queue ()
   : NS_LOG_TEMPLATE_DEFINE ("Queue")
 {
+  std::vector<double> vecWeight;
+  vecWeight.push_back(0.5);
+  vecWeight.push_back(0.3);
+  vecWeight.push_back(0.2);
+
+  SetNumPriority(DEFAULTNUMPRIORITY, vecWeight);
+  m_randomVariable = CreateObject<UniformRandomVariable>();
 }
 
 template <typename Item>
 Queue<Item>::~Queue ()
 {
+}
+
+template <typename Item>
+void
+Queue<Item>::SetNumPriority(uint32_t numPriority, std::vector<double> weight)
+{
+    // NS_LOG_FUNCTION(this);
+    if (numPriority < 1)
+    {
+        // NS_LOG_ERROR("Number of priority cannot be less than 1");
+        return;
+    }
+
+    if (weight.size() != (numPriority - 1))
+    {
+        // NS_LOG_ERROR("Number of weight is wrong");
+        return;
+    }
+
+    m_numPriority = numPriority;
+    m_vecWeight = weight;
+
+    uint32_t curNumPriority = m_vecQuePackets.size();
+
+    if (curNumPriority < numPriority)
+    {
+        for (int i = 0; i < (numPriority - curNumPriority); i++)
+        {
+            std::queue<Ptr<Item>> quePackets;
+            m_vecQuePackets.push_back(quePackets);
+        }
+    }
+    else if (curNumPriority > numPriority)
+    {
+        //if there are more priorities, put the packets in queue to the last one
+        std::vector<Ptr<Item>> vecTemp;
+        uint32_t indexStart = numPriority;
+        for (int i = indexStart; i < curNumPriority; i++)
+        {
+            std::queue<Ptr<Item>> queTemp = m_vecQuePackets[i];
+            while (queTemp.size() > 0)
+            {
+                vecTemp.push_back(queTemp.front());
+                queTemp.pop();
+            }
+        }
+
+        m_vecQuePackets.resize(numPriority);
+
+        std::queue<Ptr<Item>> queLast = m_vecQuePackets.back();
+        for (uint32_t i = 0; i < vecTemp.size(); i++)
+        {
+            queLast.push(vecTemp[i]);
+        }
+    }
+}
+
+template <typename Item>
+void
+Queue<Item>::SetQueueController(Ptr<ControlDecider> controller)
+{
+  queue_controller = controller;
+}
+
+template <typename Item>
+bool
+Queue<Item>::DoEnqueue (Ptr<Item> item)
+{
+  NS_LOG_FUNCTION (this << item);
+
+  if (GetCurrentSize () + item > GetMaxSize ())
+  {
+      NS_LOG_LOGIC ("Queue full -- dropping pkt");
+      DropBeforeEnqueue (item);
+      return false;
+  }
+
+  Ipv4PriorityTag tag;
+  if (item->FindFirstMatchingByteTag (tag))
+  {
+      uint32_t priority = tag.GetPriorityTag();
+      m_vecQuePackets[priority-1].push(item);
+
+  }
+  else
+  {
+      // NS_LOG_INFO("priority tag on packet npot found");
+      m_vecQuePackets[0].push(item);
+  }
+
+  uint32_t size = item->GetSize ();
+  m_nBytes += size;
+  m_nTotalReceivedBytes += size;
+
+  m_nPackets++;
+  m_nTotalReceivedPackets++;
+
+  NS_LOG_LOGIC ("m_traceEnqueue (p)");
+  m_traceEnqueue (item);
+
+  return true;
+}
+
+template <typename Item>
+Ptr<Item>
+Queue<Item>::DoDequeue (void)
+{
+  NS_LOG_FUNCTION (this);
+
+  if (m_nPackets.Get () == 0)
+    {
+      NS_LOG_LOGIC ("Queue empty");
+      return 0;
+    }
+
+  Ptr<Item> item;
+
+  //priority 0 doesn't have to wait
+  if (m_vecQuePackets[0].size() > 0)
+  {
+      item = m_vecQuePackets[0].front();
+      m_vecQuePackets[0].pop();
+  }
+  else
+  {
+      //other queues
+      std::vector<uint32_t> vecIndex;
+      for (uint32_t i = 1; i < m_numPriority; i++)
+      {
+          if (m_vecQuePackets[i].size() > 0)
+          {
+              vecIndex.push_back(i);
+          }
+      }
+
+      //get accumulate weight
+      std::vector<double> vecAcc;
+      double acc = 0;
+      for (uint32_t i = 0; i < vecIndex.size(); i++)
+      {
+          acc += m_vecWeight[vecIndex[i]];
+          vecAcc.push_back(acc);
+      }
+
+      //normalize
+      for (uint32_t i = 0; i < vecAcc.size(); i++)
+      {
+          vecAcc[i] /= acc;
+      }
+
+      //weighted
+      double randomValue = m_randomVariable->GetValue();
+      uint32_t index = 0;
+      for (uint32_t i = 0; i < vecAcc.size(); i++)
+      {
+          if (randomValue < vecAcc[i])
+          {
+              index = i;
+              break;
+          }
+      }
+
+      uint32_t queIndex = vecIndex[index];
+      item = m_vecQuePackets[queIndex].front();
+      m_vecQuePackets[queIndex].pop();
+  }
+
+  if (item != 0)
+    {
+      NS_ASSERT (m_nBytes.Get () >= item->GetSize ());
+      NS_ASSERT (m_nPackets.Get () > 0);
+
+      m_nBytes -= item->GetSize ();
+      m_nPackets--;
+
+      NS_LOG_LOGIC ("m_traceDequeue (p)");
+      m_traceDequeue (item);
+    }
+  return item;
+}
+
+template <typename Item>
+Ptr<Item>
+Queue<Item>::DoRemove (void)
+{
+  NS_LOG_FUNCTION (this);
+
+  if (m_nPackets.Get () == 0)
+    {
+      NS_LOG_LOGIC ("Queue empty");
+      return 0;
+    }
+
+  for (int i = 0; i < m_vecQuePackets.size(); i++)
+  {
+    if (m_vecQuePackets[i].size() > 0)
+    {
+        Ptr<Item> item = m_vecQuePackets[i].front();
+        m_vecQuePackets[i].pop();
+        NS_ASSERT (m_nBytes.Get () >= item->GetSize ());
+        NS_ASSERT (m_nPackets.Get () > 0);
+        m_nBytes -= item->GetSize ();
+        m_nPackets--;
+        // packets are first dequeued and then dropped
+        NS_LOG_LOGIC ("m_traceDequeue (p)");
+        m_traceDequeue (item);
+        DropAfterDequeue (item);
+        return item;
+    }
+  }
+  return(0);
+}
+
+template <typename Item>
+Ptr<const Item>
+Queue<Item>::DoPeek (void) const
+{
+  NS_LOG_FUNCTION (this);
+
+  if (m_nPackets.Get () == 0)
+    {
+      NS_LOG_LOGIC ("Queue empty");
+      return 0;
+    }
+
+  for (int i = 0; i < m_vecQuePackets.size(); i++)
+  {
+    if (m_vecQuePackets[i].size() > 0)
+    {
+        //std::cout << "packet id: " << (m_vecQuePackets[i].front())->GetUid() << std::endl;
+        return m_vecQuePackets[i].front();
+    }
+  }
+  return 0;
 }
 
 template <typename Item>

@@ -37,6 +37,8 @@
 #include "ns3/net-device-queue-interface.h"
 #include "tbf-queue-disc.h"
 
+#include "ns3/multi-queue.h"
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("TbfQueueDisc");

@@ -27,6 +27,7 @@
 #include "ns3/node-container.h"
 
 #include "ns3/trace-helper.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -50,6 +51,10 @@ public:
    */
   PointToPointHelper ();
   virtual ~PointToPointHelper () {}
+
+  //set device controller
+  void SetHelpController(Ptr<ControlDecider> controller);
+  Ptr<ControlDecider> help_controller;
 
   /**
    * Each point to point net device must have a queue to pass packets through.

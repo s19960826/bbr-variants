@@ -20,14 +20,15 @@
 #define DROPTAIL_H
 
 #include "ns3/queue.h"
+#include "ns3/packet.h"
+#include "ns3/ipv4-priority-tag.h"
+#include "ns3/address-tag.h"
+
+
+
 
 namespace ns3 {
 
-/**
- * \ingroup queue
- *
- * \brief A FIFO packet queue that drops tail-end packets on overflow
- */
 template <typename Item>
 class DropTailQueue : public Queue<Item>
 {
@@ -98,7 +99,14 @@ bool
 DropTailQueue<Item>::Enqueue (Ptr<Item> item)
 {
   NS_LOG_FUNCTION (this << item);
+/*
+    Ipv4PriorityTag tag;
+    if (item->FindFirstMatchingByteTag (tag))
+    {
+        std::cout << "tag works" << std::endl;
 
+    }
+*/
   return DoEnqueue (end (), item);
 }
 

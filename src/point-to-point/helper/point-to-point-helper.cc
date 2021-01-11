@@ -34,6 +34,7 @@
 
 #include "ns3/trace-helper.h"
 #include "point-to-point-helper.h"
+#include "ns3/multi-queue.h"
 
 namespace ns3 {
 
@@ -42,6 +43,7 @@ NS_LOG_COMPONENT_DEFINE ("PointToPointHelper");
 PointToPointHelper::PointToPointHelper ()
 {
   m_queueFactory.SetTypeId ("ns3::DropTailQueue<Packet>");
+  //m_queueFactory.SetTypeId ("ns3::MultiQueue<Packet>");
   m_deviceFactory.SetTypeId ("ns3::PointToPointNetDevice");
   m_channelFactory.SetTypeId ("ns3::PointToPointChannel");
   m_remoteChannelFactory.SetTypeId ("ns3::PointToPointRemoteChannel");
@@ -54,6 +56,7 @@ PointToPointHelper::SetQueue (std::string type,
                               std::string n3, const AttributeValue &v3,
                               std::string n4, const AttributeValue &v4)
 {
+
   QueueBase::AppendItemTypeIfNotPresent (type, "Packet");
 
   m_queueFactory.SetTypeId (type);
@@ -61,12 +64,19 @@ PointToPointHelper::SetQueue (std::string type,
   m_queueFactory.Set (n2, v2);
   m_queueFactory.Set (n3, v3);
   m_queueFactory.Set (n4, v4);
+
 }
 
 void 
 PointToPointHelper::SetDeviceAttribute (std::string n1, const AttributeValue &v1)
 {
   m_deviceFactory.Set (n1, v1);
+}
+
+void
+PointToPointHelper::SetHelpController(Ptr<ControlDecider> controller)
+{
+  help_controller = controller;
 }
 
 void 
@@ -234,11 +244,15 @@ PointToPointHelper::Install (Ptr<Node> a, Ptr<Node> b)
   a->AddDevice (devA);
   Ptr<Queue<Packet> > queueA = m_queueFactory.Create<Queue<Packet> > ();
   devA->SetQueue (queueA);
+  devA->SetDevController(help_controller);
+
   Ptr<PointToPointNetDevice> devB = m_deviceFactory.Create<PointToPointNetDevice> ();
   devB->SetAddress (Mac48Address::Allocate ());
   b->AddDevice (devB);
   Ptr<Queue<Packet> > queueB = m_queueFactory.Create<Queue<Packet> > ();
   devB->SetQueue (queueB);
+  devB->SetDevController(help_controller);
+
   // Aggregate NetDeviceQueueInterface objects
   Ptr<NetDeviceQueueInterface> ndqiA = CreateObject<NetDeviceQueueInterface> ();
   ndqiA->GetTxQueue (0)->ConnectQueueTraces (queueA);

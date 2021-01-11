@@ -91,7 +91,6 @@ TcpBic::TcpBic (const TcpBic &sock)
   NS_LOG_FUNCTION (this);
 }
 
-
 void
 TcpBic::IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked)
 {

@@ -9,6 +9,14 @@ def build(bld):
         'model/point-to-point-remote-channel.cc',
         'model/ppp-header.cc',
         'helper/point-to-point-helper.cc',
+        'model/send-net-device.cc',
+        'model/send-channel.cc',
+        'model/send-remote-channel.cc',
+        'model/recv-net-device.cc',
+        'model/recv-channel.cc',
+        'model/recv-remote-channel.cc',
+        'helper/send-helper.cc',
+        'helper/recv-helper.cc',
         ]
 
     module_test = bld.create_ns3_module_test_library('point-to-point')
@@ -24,6 +32,14 @@ def build(bld):
         'model/point-to-point-remote-channel.h',
         'model/ppp-header.h',
         'helper/point-to-point-helper.h',
+        'model/send-net-device.h',
+        'model/send-channel.h',
+        'model/send-remote-channel.h',
+        'model/recv-net-device.h',
+        'model/recv-channel.h',
+        'model/recv-remote-channel.h',
+        'helper/send-helper.h',
+        'helper/recv-helper.h',
         ]
 
     if (bld.env['ENABLE_EXAMPLES']):

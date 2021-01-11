@@ -209,6 +209,15 @@ TcpNewReno::GetSsThresh (Ptr<const TcpSocketState> state,
   return std::max (2 * state->m_segmentSize, bytesInFlight / 2);
 }
 
+/*
+void
+TcpNewReno::SetController(Ptr<ControlDecider> controller)
+{
+  m_controller = controller;
+  //std::cout << "newreno works" << std::endl;
+}
+*/
+
 Ptr<TcpCongestionOps>
 TcpNewReno::Fork ()
 {

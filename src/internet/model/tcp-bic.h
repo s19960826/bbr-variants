@@ -22,6 +22,7 @@
 
 #include "ns3/tcp-congestion-ops.h"
 #include "ns3/tcp-recovery-ops.h"
+#include "ns3/control-decider.h"
 
 class TcpBicIncrementTest;
 class TcpBicDecrementTest;

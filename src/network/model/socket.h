@@ -32,6 +32,7 @@
 #include <stdint.h>
 #include "ns3/inet-socket-address.h"
 #include "ns3/inet6-socket-address.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -74,6 +75,11 @@ public:
 
   Socket (void);
   virtual ~Socket (void);
+
+  //set controller
+  virtual void SetController(Ptr<ControlDecider> controller)
+  {
+  }
 
   /**
    * \enum SocketErrno

@@ -30,6 +30,7 @@
 #include "ns3/data-rate.h"
 #include "ns3/ptr.h"
 #include "ns3/mac48-address.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -84,6 +85,11 @@ public:
    * This is the destructor for the PointToPointNetDevice.
    */
   virtual ~PointToPointNetDevice ();
+
+  //set device controller
+  Ptr<ControlDecider>   dev_controller;
+  void SetDevController(Ptr<ControlDecider> controller);
+  int randValue = 0;
 
   /**
    * Set the Data Rate used for transmission of packets.  The data rate is

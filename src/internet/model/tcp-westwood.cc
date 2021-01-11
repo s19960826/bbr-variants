@@ -36,6 +36,7 @@
 #include "ns3/simulator.h"
 #include "rtt-estimator.h"
 #include "tcp-socket-base.h"
+#include "ns3/control-decider.h"
 
 NS_LOG_COMPONENT_DEFINE ("TcpWestwood");
 
@@ -92,12 +93,35 @@ TcpWestwood::~TcpWestwood (void)
 {
 }
 
+/*
+void 
+TcpWestwood::SetController(Ptr<ControlDecider> controller)
+{
+  m_controller = controller;
+  std::cout << "westwood works" << std::endl;
+}
+*/
+
 void
 TcpWestwood::PktsAcked (Ptr<TcpSocketState> tcb, uint32_t packetsAcked,
                         const Time& rtt)
 {
   NS_LOG_FUNCTION (this << tcb << packetsAcked << rtt);
-
+  /*
+  Time tmp = tcb->m_lastRtt;
+  if(1) //Now().GetSeconds()-lastTime>1
+  {
+    double avgThroughput = m_controller->AvgThroughput(tcb->m_flowtype, (tmp).GetMicroSeconds(), Now().GetMicroSeconds());
+    double avgLostRate = m_controller->LostRate(tcb->m_flowtype, (tmp).GetMicroSeconds(), Now().GetMicroSeconds());
+    double avgRTT = m_controller->AvgRTT(tcb->m_flowtype, tcb->m_Rtt, tcb->m_RttTime, (tmp).GetMicroSeconds(), Now().GetMicroSeconds());
+    //std::cout << "throughput: " << avgThroughput << std::endl;
+    //std::cout << "loss rate: " << avgLostRate << std::endl;
+    //std::cout << "rtt: " << avgRTT << std::endl;
+    //std::cout <<"...................................." << std::endl;
+    int alg = m_controller->SwitchAlg(avgThroughput, avgLostRate, avgRTT);
+    lastTime = Now().GetSeconds();
+  }
+  */
   if (rtt.IsZero ())
     {
       NS_LOG_WARN ("RTT measured is zero!");
@@ -165,6 +189,7 @@ TcpWestwood::GetSsThresh (Ptr<const TcpSocketState> tcb,
   NS_LOG_LOGIC ("CurrentBW: " << m_currentBW << " minRtt: " <<
                 tcb->m_minRtt << " ssthresh: " <<
                 m_currentBW * static_cast<double> (tcb->m_minRtt.GetSeconds ()));
+  //std::cout << "ssthresh: " << m_currentBW * static_cast<double> (tcb->m_minRtt.GetSeconds ()) << std::endl;
 
   return std::max (2*tcb->m_segmentSize,
                    uint32_t (m_currentBW * static_cast<double> (tcb->m_minRtt.GetSeconds ())));

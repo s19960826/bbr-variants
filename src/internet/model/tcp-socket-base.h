@@ -32,6 +32,7 @@
 #include "ns3/data-rate.h"
 #include "ns3/node.h"
 #include "ns3/tcp-socket-state.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -247,6 +248,11 @@ public:
    */
   TcpSocketBase (const TcpSocketBase& sock);
   virtual ~TcpSocketBase (void);
+
+  //set controller
+  virtual void SetController(Ptr<ControlDecider> controller);
+  Ptr<ControlDecider> m_controller;
+  int initController = 0;
 
   // Set associated Node, TcpL4Protocol, RttEstimator to this socket
 
@@ -1248,6 +1254,9 @@ protected:
   SequenceNumber32       m_recover    {0};   //!< Previous highest Tx seqnum for fast recovery (set it to initial seq number)
   uint32_t               m_retxThresh {3};   //!< Fast Retransmit threshold
   bool                   m_limitedTx  {true}; //!< perform limited transmit
+
+  //make sure that when rtt is saved after controller has been initilized
+  int initRttCount = 0;
 
   // Transmission Control Block
   Ptr<TcpSocketState>    m_tcb;               //!< Congestion control information

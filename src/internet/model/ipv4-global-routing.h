@@ -273,6 +273,8 @@ private:
   ASExternalRoutes m_ASexternalRoutes; //!< External routes imported
 
   Ptr<Ipv4> m_ipv4; //!< associated IPv4 instance
+
+  //std::vector<std::map<std::vector<Ipv4RoutingTableEntry*>, std::vector<std::vector<uint32_t>>>> m_flowRouting;
 };
 
 } // Namespace ns3

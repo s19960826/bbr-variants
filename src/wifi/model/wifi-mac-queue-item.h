@@ -26,6 +26,7 @@
 
 #include "ns3/nstime.h"
 #include "wifi-mac-header.h"
+#include "ns3/tag.h"
 
 namespace ns3 {
 
@@ -102,10 +103,16 @@ public:
    */
   virtual void Print (std::ostream &os) const;
 
+  //add tag detector
+  virtual bool FindFirstMatchingByteTag (Tag &tag) const;
+
+
+
 private:
   Ptr<const Packet> m_packet;  //!< The packet contained in this queue item
   WifiMacHeader m_header;      //!< Wifi MAC header associated with the packet
   Time m_tstamp;               //!< timestamp when the packet arrived at the queue
+
 };
 
 /**

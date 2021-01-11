@@ -34,6 +34,8 @@
 #include "pie-queue-disc.h"
 #include "ns3/drop-tail-queue.h"
 
+#include "ns3/multi-queue.h"
+
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("PieQueueDisc");

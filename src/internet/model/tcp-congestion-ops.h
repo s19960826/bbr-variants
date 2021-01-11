@@ -20,6 +20,7 @@
 #define TCPCONGESTIONOPS_H
 
 #include "ns3/tcp-socket-state.h"
+#include "ns3/control-decider.h"
 
 namespace ns3 {
 
@@ -72,6 +73,9 @@ public:
    * \return A string identifying the name
    */
   virtual std::string GetName () const = 0;
+  virtual void SetController(Ptr<ControlDecider> controller)
+  {
+  }
 
   /**
    * \brief Get the slow start threshold after a loss event
@@ -201,7 +205,8 @@ public:
   virtual void IncreaseWindow (Ptr<TcpSocketState> tcb, uint32_t segmentsAcked);
   virtual uint32_t GetSsThresh (Ptr<const TcpSocketState> tcb,
                                 uint32_t bytesInFlight);
-
+  //virtual void SetController(Ptr<ControlDecider> controller);
+  //Ptr<ControlDecider> m_controller;
   virtual Ptr<TcpCongestionOps> Fork ();
 
 protected:
